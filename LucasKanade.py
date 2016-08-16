@@ -58,6 +58,11 @@ if p>355:
 
 p1=1
 p2=1
+threshold=0.0001
+#loop over k
+#loop for delta_p
+#loop for stride over image say 5*5         
+
 print len(frames[0])
 warped_i=frames[0]
 err_img=frames[0]
@@ -65,10 +70,7 @@ warped_gradx=frames[0]
 warped_grady=frames[0]
 
 
-for i in range(len(frames[0])):
-	for j in range(len(frames[0][0])):
-		warped_i[i][j]=frames[k+1][(i+p1)%len(frames[0])][(j+p2)%len(frames[0][0])]
-
+	
 
 print "original image" 
 cv2.imshow('image',frames[k+1])
@@ -81,72 +83,56 @@ cv2.waitKey(0)
 cv2.destroyAllWindows()
 
 #err_img=cv2.addWeighted(frames[k],1,warped_i,-1,0)
-err_img=frames[k]-warped_i
-print frames[k]
-print warped_i
+while(1>0):                     
 
-print err_img
+	for i in range(len(frames[0])):
+		for j in range(len(frames[0][0])):
+			warped_i[i][j]=frames[k+1][(i+p1)%len(frames[0])][(j+p2)%len(frames[0][0])]
 
-grad_i_x=cv2.Sobel(frames[k+1],cv2.CV_64F,1,0)
-grad_i_y=cv2.Sobel(frames[k+1],cv2.CV_64F,0,1)
-
-
-
-
-
-for i in range(len(frames[0])):
-	for j in range(len(frames[0][0])):
-		warped_gradx[i][j]=grad_i_x[(i+p1)%len(frames[0])][(j+p2)%len(frames[0][0])]
-
-for i in range(len(frames[0])):
-	for j in range(len(frames[0][0])):
-		warped_grady[i][j]=grad_i_y[(i+p1)%len(frames[0])][(j+p2)%len(frames[0][0])]
+	err_img=frames[k]-warped_i
+	
+	grad_i_x=cv2.Sobel(frames[k+1],cv2.CV_64F,1,0)
+	grad_i_y=cv2.Sobel(frames[k+1],cv2.CV_64F,0,1)
 
 
-jacobian_w=[[1,0],[0,1]]
-print jacobian_w
-#steepest_descent=[grad_i_x,grad_i_y]
 
-print type(frames[0])
-steepest_descent_trans = np.zeros((2*len(frames[0]),len(frames[0])))
-for i in range(2*len(frames[0])):
-	for j in range(len(frames[0])):
-		if i<len(frames[0]):
-			steepest_descent_trans[i][j]=warped_gradx[i][j]
-		else:
-			steepest_descent_trans[i][j]=warped_grady[i-len(frames[0])][j]
-		#if steepest_descent_trans[i][j]<0.1:
-		# 	steepest_descent_trans[i][j]=(i+j)*0.1
-print len(steepest_descent_trans[0])
-print len(steepest_descent_trans)
-steepest_descent=steepest_descent_trans.transpose(1,0)
-print len(steepest_descent[0])
-print len(steepest_descent) 
-forp=np.dot(steepest_descent_trans,err_img)
-print type(steepest_descent_trans)
 
-hessian=np.dot(steepest_descent_trans,steepest_descent)
-count=0
 
-for i in range(len(hessian)):
-	for j in range(len(hessian[0])):
-		if(hessian[i][j]==0):
-			hessian[i][j]=(i+j)*0.1
-			count=count+1
-print count
+	for i in range(len(frames[0])):
+		for j in range(len(frames[0][0])):
+			warped_gradx[i][j]=grad_i_x[(i+p1)%len(frames[0])][(j+p2)%len(frames[0][0])]
 
-print len(hessian) 
-print len(hessian[0])
-print np.linalg.det(hessian)
+	for i in range(len(frames[0])):
+		for j in range(len(frames[0][0])):
+			warped_grady[i][j]=grad_i_y[(i+p1)%len(frames[0])][(j+p2)%len(frames[0][0])]
 
-if np.linalg.det(hessian)!=0.000000000000000:
-	hesinv=inv(hessian)
-else:
-	print "it's a singular matrix"
-print "Dsd"
-print steepest_descent
-print steepest_descent_trans
-print
-#for i in range(len(hessian)):
-#	print hessian[i]
-delta_p=np.dot(hesinv,forp)
+
+	jacobian_w=[[1,0],[0,1]]
+	
+	hessian=np.zeros((2,2))
+	
+	for i in range(len(frames[0])):
+		for j in range(len(frames[0][0])):
+			hessian[0][0]=hessian[0][0]+(warped_gradx[i][j]*warped_gradx[i][j])
+			hessian[0][1]=hessian[0][1]+(warped_gradx[i][j]*warped_grady[i][j])
+			hessian[1][0]=hessian[1][0]+(warped_grady[i][j]*warped_gradx[i][j])
+			hessian[1][1]=hessian[1][1]+(warped_grady[i][j]*warped_grady[i][j])
+	hes_inv=inv(hessian)
+
+	for_p=np.zeros((2,1))
+	for i in range(len(frames[0])):
+		for j in range(len(frames[0][0])):
+			for_p[0][0]=for_p[0][0]+warped_gradx[i][j]
+			for_p[1][0]=for_p[1][0]+warped_grady[i][j]
+
+	delta_p=np.dot(hes_inv,for_p)
+	if (delta_p[0][0]*delta_p[0][0])+(delta_p[1][0]*delta_p[1][0])<threshold:
+		break
+	print delta_p
+
+	print (delta_p[0][0]*delta_p[0][0])+(delta_p[1][0]*delta_p[1][0])
+	p1=p1+delta_p[0][0]
+	p2=p2+delta_p[1][0]
+
+print p1
+print p2
