@@ -32,17 +32,17 @@ while(True):
 
 cap.release()
 cv2.destroyAllWindows()
-k=57 #frame index to be iterated and initialize p1 and p2
+k=169 #frame index to be iterated and initialize p1 and p2
 print len(frames)
 print len(frames[0][0])
-'''
 
+'''
 full_frames=[]
 full_frames=frames
 frames=[]
 x=0
 p=0
-dim=360
+dim=10
 temp1=np.zeros((dim,dim))
 for w in range(total):
 	for y in range(dim):
@@ -59,8 +59,6 @@ if p>355:
 	p=0
 
 '''
-
-
 #frame is len(frames[0]) * len(frames[0][0])
 #Let T=frame[k] and I=frame[k+1] and translational warp parametres be p1 and p2
 
@@ -84,8 +82,19 @@ def bilinear(x,y,I):
 	e[0][0]=y2-y
 	e[1][0]=y-y1
 	return temp*np.dot(np.dot(q,w),e)
-p1=10
-p2=10
+p1=1
+p2=1
+p3=1
+p4=1
+p5=1
+p6=1
+p=np.zeros((2,3))
+p[0][0]=1+p1
+p[0][1]=p3
+p[0][2]=p5
+p[1][0]	=p2
+p[1][1]=1+p4
+p[1][2]=p6
 threshold=0.0000000000001
 #loop over k
 #loop for delta_p
@@ -98,16 +107,17 @@ warped_gradx=frames[0]
 warped_grady=frames[0]
 
 
+
 for i in range(len(frames[0])):
 	for j in range(len(frames[0][0])):
-		if i==len(frames[0])-1 or j==len(frames[0][0]):
-			warped_i[i][j]=frames[k+1][i][j]
-		else:
-			warped_i[i][j]=bilinear((i+p1)%len(frames[0]),(j+p2)%len(frames[0][0]),frames[k+1])   #frames[k+1][(i+p1)%len(frames[0])][(j+p2)%len(frames[0][0])]
+		location=np.zeros((3,1))
+		location[0][0]=i
+		location[1][0]=j
+		location[2][0]=1
+		cord=np.dot(p,location)
+		warped_i[i][j]=bilinear((cord[0][0])%len(frames[0]),(cord[1][0])%len(frames[0][0]),frames[k+1])   #frames[k+1][(i+p1)%len(frames[0])][(j+p2)%len(frames[0][0])]
 
 
-print frames[k+1]
-print k
 print "original image" 
 cv2.imshow('image',frames[k+1])
 cv2.waitKey(0)
@@ -124,7 +134,12 @@ while(1>0):
 
 	for i in range(len(frames[0])):
 		for j in range(len(frames[0][0])):
-			warped_i[i][j]=bilinear((i+p1)%len(frames[0]),(j+p2)%len(frames[0][0]),frames[k+1])
+			location=np.zeros((3,1))
+			location[0][0]=i
+			location[1][0]=j
+			location[2][0]=1
+			cord=np.dot(p,location)
+			warped_i[i][j]=bilinear((cord[0][0])%len(frames[0]),(cord[1][0])%len(frames[0][0]),frames[k+1])
 
 
 	#print warped_i
@@ -147,17 +162,21 @@ while(1>0):
 
 	for i in range(len(frames[0])):
 		for j in range(len(frames[0][0])):
-			if i==len(frames[0])-1 or j==len(frames[0][0]):
-				warped_gradx[i][j]=grad_i_x[i][j]
-			else:
-				warped_gradx[i][j]=bilinear((i+p1)%len(frames[0]),(j+p2)%len(frames[0][0]),grad_i_x)
+			location=np.zeros((3,1))
+			location[0][0]=i
+			location[1][0]=j
+			location[2][0]=1
+			cord=np.dot(p,location)
+			warped_gradx[i][j]=bilinear((cord[0][0])%len(frames[0]),(cord[1][0])%len(frames[0][0]),grad_i_x)
 
 	for i in range(len(frames[0])):
 		for j in range(len(frames[0][0])):
-			if i==len(frames[0])-1 or j==len(frames[0][0]):
-				warped_grady[i][j]=grad_i_y[i][j]
-			else:
-				warped_grady[i][j]=bilinear((i+p1)%len(frames[0]),(j+p2)%len(frames[0][0]),grad_i_y)
+			location=np.zeros((3,1))
+			location[0][0]=i
+			location[1][0]=j
+			location[2][0]=1
+			cord=np.dot(p,location)
+			warped_grady[i][j]=bilinear((cord[0][0])%len(frames[0]),(cord[1][0])%len(frames[0][0]),grad_i_y)
 
 
 	jacobian_w=[[1,0],[0,1]]
@@ -168,38 +187,52 @@ while(1>0):
 
 	#print type(frames[0])
 	
-	hessian=np.zeros((2,2))
+	hessian=np.zeros((6,6))
 	for i in range(len(frames[0])):
 		for j in range(len(frames[0][0])):
-			hessian[0][0]=hessian[0][0]+(warped_gradx[i][j]*warped_gradx[i][j])
-			hessian[0][1]=hessian[0][1]+(warped_gradx[i][j]*warped_grady[i][j])
-			hessian[1][0]=hessian[1][0]+(warped_grady[i][j]*warped_gradx[i][j])
-			hessian[1][1]=hessian[1][1]+(warped_grady[i][j]*warped_grady[i][j])
-
+			z=np.zeros((6,1))
+			z[0][0]=i*warped_gradx[i][j]
+			z[1][0]=i*warped_grady[i][j]
+			z[2][0]=j*warped_gradx[i][j]
+			z[3][0]=j*warped_grady[i][j]
+			z[4][0]=warped_gradx[i][j]
+			z[5][0]=warped_grady[i][j]
+			x=np.zeros((1,6))
+			x[0][0]=i*warped_gradx[i][j]
+			x[0][1]=i*warped_grady[i][j]
+			x[0][2]=j*warped_gradx[i][j]
+			x[0][3]=j*warped_grady[i][j]
+			x[0][4]=warped_gradx[i][j]
+			x[0][5]=warped_grady[i][j]
+			hessian=np.add(hessian,np.dot(z,x))
 	#print "hes"
 	#print hessian
 	hes_inv=np.linalg.pinv(hessian)
 	#print hes_inv
 
-	for_p=np.zeros((2,1))
-	print err_img
+	for_p=np.zeros((6,1))
 	for i in range(len(frames[0])):
 		for j in range(len(frames[0][0])):
-			for_p[0][0]=for_p[0][0]+(warped_gradx[i][j]*err_img[i][j])
-			for_p[1][0]=for_p[1][0]+(warped_grady[i][j]*err_img[i][j])
+			for_p[0][0]=for_p[0][0]+(i*warped_gradx[i][j]*err_img[i][j])
+			for_p[1][0]=for_p[1][0]+(i*warped_grady[i][j]*err_img[i][j])
+			for_p[2][0]=for_p[2][0]+(j*warped_gradx[i][j]*err_img[i][j])
+			for_p[3][0]=for_p[3][0]+(j*warped_grady[i][j]*err_img[i][j])
+			for_p[4][0]=for_p[4][0]+(warped_gradx[i][j]*err_img[i][j])
+			for_p[5][0]=for_p[5][0]+(warped_grady[i][j]*err_img[i][j])
 
 
 	delta_p=np.dot(hes_inv,for_p)
-	print (delta_p[0][0]*delta_p[0][0])+(delta_p[1][0]*delta_p[1][0])
 	if (delta_p[0][0]*delta_p[0][0])+(delta_p[1][0]*delta_p[1][0])<threshold:
 		break
 	
-	print delta_p
+	
 	print "diff"
-	print (delta_p[0][0]*delta_p[0][0])+(delta_p[1][0]*delta_p[1][0])
+	print np.linalg.norm(delta_p)
+	p[0][0]=1+p1+delta_p[0][0]
+	p[0][1]=p3+delta_p[2][0]
+	p[0][2]=p5+delta_p[4][0]
+	p[1][0]	=p2+delta_p[1][0]
+	p[1][1]=1+p4+delta_p[3][0]
+	p[1][2]=p6+delta_p[5][0]
 
-	p1=p1+delta_p[0][0]
-	p2=p2+delta_p[1][0]
-
-	print p1
-	print p2
+	
