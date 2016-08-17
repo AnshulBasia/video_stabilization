@@ -36,13 +36,13 @@ k=169 #frame index to be iterated and initialize p1 and p2
 print len(frames)
 print len(frames[0][0])
 
-'''
+
 full_frames=[]
 full_frames=frames
 frames=[]
-x=0
-p=0
-dim=10
+x=180
+p=180
+dim=30
 temp1=np.zeros((dim,dim))
 for w in range(total):
 	for y in range(dim):
@@ -58,7 +58,7 @@ if x>475:
 if p>355:
 	p=0
 
-'''
+
 #frame is len(frames[0]) * len(frames[0][0])
 #Let T=frame[k] and I=frame[k+1] and translational warp parametres be p1 and p2
 
@@ -82,12 +82,12 @@ def bilinear(x,y,I):
 	e[0][0]=y2-y
 	e[1][0]=y-y1
 	return temp*np.dot(np.dot(q,w),e)
-p1=1
-p2=1
-p3=1
-p4=1
-p5=1
-p6=1
+p1=10
+p2=17
+p3=14
+p4=12
+p5=15
+p6=17
 p=np.zeros((2,3))
 p[0][0]=1+p1
 p[0][1]=p3
@@ -107,7 +107,6 @@ warped_gradx=frames[0]
 warped_grady=frames[0]
 
 
-
 for i in range(len(frames[0])):
 	for j in range(len(frames[0][0])):
 		location=np.zeros((3,1))
@@ -115,10 +114,15 @@ for i in range(len(frames[0])):
 		location[1][0]=j
 		location[2][0]=1
 		cord=np.dot(p,location)
+		print cord
 		warped_i[i][j]=bilinear((cord[0][0])%len(frames[0]),(cord[1][0])%len(frames[0][0]),frames[k+1])   #frames[k+1][(i+p1)%len(frames[0])][(j+p2)%len(frames[0][0])]
-
+		#print frames[k+1][i][j]
+		#print bilinear((cord[0][0])%len(frames[0]),(cord[1][0])%len(frames[0][0]),frames[k+1])
 
 print "original image" 
+print type(frames[k+1])
+
+
 cv2.imshow('image',frames[k+1])
 cv2.waitKey(0)
 
