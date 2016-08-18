@@ -93,7 +93,7 @@ threshold=0.0000000000001
 
 print len(frames[0])
 warped_i=frames[0]
-err_img=frames[0]
+
 warped_gradx=frames[0]
 warped_grady=frames[0]
 
@@ -122,9 +122,13 @@ cv2.destroyAllWindows()
 #err_img=cv2.addWeighted(frames[k],1,warped_i,-1,0)
 while(1>0):
 
+	err_img=[]
 	for i in range(len(frames[0])):
+		new=[]
 		for j in range(len(frames[0][0])):
 			warped_i[i][j]=bilinear((i+p1)%len(frames[0]),(j+p2)%len(frames[0][0]),frames[k+1])
+			new.append(int(frames[k][i][j])-int(warped_i[i][j]))
+		err_img.append(new)
 
 
 	#print warped_i

@@ -4,7 +4,7 @@ import cv2
 import time
 import math
 from math import *
-cap = cv2.VideoCapture('test.mp4')
+cap = cv2.VideoCapture('stabilize_it.mp4')
 i=0
 frames=[]
 total=200
@@ -35,8 +35,7 @@ cv2.destroyAllWindows()
 k=169 #frame index to be iterated and initialize p1 and p2
 print len(frames)
 print len(frames[0][0])
-
-
+'''
 full_frames=[]
 full_frames=frames
 frames=[]
@@ -58,7 +57,7 @@ if x>475:
 if p>355:
 	p=0
 
-
+'''
 #frame is len(frames[0]) * len(frames[0][0])
 #Let T=frame[k] and I=frame[k+1] and translational warp parametres be p1 and p2
 
@@ -102,7 +101,6 @@ threshold=0.0000000000001
 
 print len(frames[0])
 warped_i=frames[0]
-err_img=frames[0]
 warped_gradx=frames[0]
 warped_grady=frames[0]
 
@@ -114,7 +112,7 @@ for i in range(len(frames[0])):
 		location[1][0]=j
 		location[2][0]=1
 		cord=np.dot(p,location)
-		print cord
+		#print cord
 		warped_i[i][j]=bilinear((cord[0][0])%len(frames[0]),(cord[1][0])%len(frames[0][0]),frames[k+1])   #frames[k+1][(i+p1)%len(frames[0])][(j+p2)%len(frames[0][0])]
 		#print frames[k+1][i][j]
 		#print bilinear((cord[0][0])%len(frames[0]),(cord[1][0])%len(frames[0][0]),frames[k+1])
@@ -134,24 +132,26 @@ cv2.destroyAllWindows()
 
 
 #err_img=cv2.addWeighted(frames[k],1,warped_i,-1,0)
+
 while(1>0):
 
+	
+	err_img=[]
 	for i in range(len(frames[0])):
+		new=[]
 		for j in range(len(frames[0][0])):
+			
 			location=np.zeros((3,1))
 			location[0][0]=i
 			location[1][0]=j
 			location[2][0]=1
 			cord=np.dot(p,location)
 			warped_i[i][j]=bilinear((cord[0][0])%len(frames[0]),(cord[1][0])%len(frames[0][0]),frames[k+1])
+			new.append(int(frames[k][i][j])-int(warped_i[i][j]))
+		err_img.append(new)
 
 
-	#print warped_i
-	err_img=frames[k]-warped_i
-	#print frames[k]
-	#print warped_i
-
-	#print err_img
+	
 
 	#grad_i_x=cv2.Sobel(frames[k+1],cv2.CV_64F,1,0)
 	#grad_i_y=cv2.Sobel(frames[k+1],cv2.CV_64F,0,1)
